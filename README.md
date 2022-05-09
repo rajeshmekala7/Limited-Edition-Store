@@ -11,7 +11,7 @@ This project's goal is to enable consumers to purchase limited edition products 
 ## Instructions to deploy, test, and interact:
 
 1. Open Ganache, and click “quick start”. Copy the mnemonic. <br>
-2. 2. In the browser, open metamask and click on “ import using Secret Recovery Phrase”. Use the mnemonic and set the new password, and add the accounts.<br>
+2. In the browser, open metamask and click on “ import using Secret Recovery Phrase”. Use the mnemonic and set the new password, and add the accounts.<br>
 3. Now in the “les-Dapp/les-contract” folder, use the command prompt and enter “truffle compile”. <br>
 4. After compiling without any errors, now enter “truffle migrate –reset”. (use sudo if needed). <br>
 5. Copy the contract address and paste it into the App.address property in the les-Dapp/les-app/src/js/app.js file. <br>
