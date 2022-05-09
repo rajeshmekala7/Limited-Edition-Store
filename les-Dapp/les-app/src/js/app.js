@@ -1,9 +1,7 @@
 App = {
   web3: null,
   contracts: {},
-  // address:'0x085475DDBDBDA7Bdf336Ae2a0Cdf2bADD78355C4', - ropsten working using remix
-  // address: '0xBE84d21295ba6996788a56F014b91dfd7410239D', // ropsten using truffle
-  address:'0x891352683B414EE66c515E9B4386f2d92Df21601', // ropsten using truffle new
+  address:'0x73336FF4286bbE4c57218580C7950AEFDa0813b0',
   handler:null,
   selectedProduct:-1,
 
@@ -24,8 +22,7 @@ App = {
   initContract: function() { 
     App.contracts.Les = new App.web3.eth.Contract(App.abi,App.address, {});
     App.populateAddress();
-    App.getProducts();
-    App.getBalance();    
+    App.getProducts();    
     return App.bindEvents();
   },
 
@@ -44,10 +41,6 @@ App = {
 
     $(document).on('click', '#ureg', function() {
       App.unregisterCompany();
-    });
-
-    $(document).on('click', '#sendtoken', function() {
-      App.sendTokens();
     });
 
     $(document).on('click', '#ap', function() {
@@ -88,8 +81,7 @@ App = {
     // alert(productId);
     App.populateAddress().then(r => App.handler = r[0]).then(()=> {
       console.log(App.handler)
-      // value : App.web3.utils.toWei(price,"ether")
-      App.contracts.Les.methods.buyProduct(productId).send({from:App.handler})
+      App.contracts.Les.methods.buyProduct(productId).send({value : App.web3.utils.toWei(price,"ether"), from:App.handler})
       .on('receipt',(receipt)=>{
         if(receipt.status) {
           $('#msg').empty();
@@ -101,23 +93,6 @@ App = {
           jQuery('#msg').append(`Product buy failed...!!!`);
           document.getElementById('mb').click()}
     )});
-  },
-
-  approve : function(price) {
-    App.populateAddress().then(r => App.handler = r[0]).then(()=> {
-      console.log(App.handler)
-      App.contracts.Les.methods.approve(price).send({from:App.handler})
-      .on('receipt',(receipt)=>{
-        if(receipt.status) {
-          $('#msg').empty();
-          jQuery('#msg').append(`Approval successful...!!!`);
-          document.getElementById('mb').click();
-      }})
-      .on('error',(err)=>{
-        $('#msg').empty();
-          jQuery('#msg').append(`Approval failed...!!!`);
-          document.getElementById('mb').click()}
-    )});  
   },
   
   addProduct : function() {
@@ -162,6 +137,7 @@ App = {
           document.getElementById('mb').click();
       })
     });
+    
   },
 
   registerCompany : function() {
@@ -218,44 +194,6 @@ App = {
   
   },
 
-  sendTokens : function() {
-    console.log('send tokens');
-    App.populateAddress().then(r => App.handler = r[0]).then(()=> {
-      var ad = $('#useraddr').val();
-      if(ad === '') {
-        $('#msg').empty();
-        jQuery('#msg').append(`Enter valid address...!!!`);
-        document.getElementById('mb').click();
-        return;
-      }
-      App.contracts.Les.methods.sendTokens(ad).send({from:App.handler})
-      .on('receipt',(receipt)=>{
-        if(receipt.status){
-          $('#msg').empty();
-          jQuery('#msg').append(`Tokens sent...!!!`);
-          document.getElementById('mb').click();
-      }})
-      .on('error',(err)=>{
-        $('#msg').empty();
-        jQuery('#msg').append(`Company registration failed...!!!`);
-        document.getElementById('mb').click();
-      })
-    });
-  },
-
-  getBalance : function() {
-    console.log('get balance called....');
-    $('#info').empty();
-    App.populateAddress().then(r => App.handler = r[0]).then(()=> {
-      App.contracts.Les.methods.getBalance(App.handler).call().then(r2=> {
-        console.log(r2);
-        const str = `Address is ${App.handler}, Balance is : ${r2}`
-        console.log(str);
-        jQuery('#info').append(str);
-      })
-    });
-  },
-
   getProducts : function() {
     // App.populateAddress().then(r => App.handler = r[0]);
     console.log("Products Fetched...!!!");
@@ -268,12 +206,11 @@ App = {
           const str= App.web3.utils.hexToAscii(r[i].productName);
           const p1 = `<div class="col-md-4"> <div class="card" style="width: 22rem; height:16rem; margin-bottom: 2rem; background-color:#e6e7ed;">
             <div class=\"card-body\" style=\"align-content: center;\"> <h5 class=\"card-title\">Product Name : ${str} </h5>
-            <h6 class=\"card-subtitle mb-2 text-muted\">Price : ${r[i].price} LEC </h6>
+            <h6 class=\"card-subtitle mb-2 text-muted\">Price : ${r[i].price} ETH </h6>
             <h6 class=\"card-subtitle mb-2 text-muted\">Items left : ${r[i].availableUnits}</h6>
             <h6 class=\"card-subtitle mb-2 text-muted\">Product Id : ${r[i].productId}</h6>
             </div>
             <div class=\"card-footer\">
-            <a href=\"#\" id=\"a${r[i].productId}\" class=\"btn btn-primary\">Approve</a>
             <a href=\"#\" id=\"b${r[i].productId}\" class=\"btn btn-primary\">Buy</a>
             </div>
             </div>
@@ -283,26 +220,16 @@ App = {
             elem.addEventListener('click', function() {
               selectedProduct=r[i].productId;
               App.buyProduct(r[i].productId, r[i].price);
-            }, false);
-            var elem2 = document.getElementById(`a${r[i].productId}`);
-            elem2.addEventListener('click', function() {
-              selectedProduct=r[i].productId;
-              App.approve(r[i].price);
-            }, false);  
+            }, false); 
         })
       })
-    });    
+    });
+     
   },
   
   abi : [
     {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "ERC20_address",
-          "type": "address"
-        }
-      ],
+      "inputs": [],
       "stateMutability": "nonpayable",
       "type": "constructor"
     },
@@ -333,19 +260,6 @@ App = {
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "price",
-          "type": "uint256"
-        }
-      ],
-      "name": "approve",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
           "name": "productId1",
           "type": "uint256"
         }
@@ -353,25 +267,6 @@ App = {
       "name": "buyProduct",
       "outputs": [],
       "stateMutability": "payable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "user",
-          "type": "address"
-        }
-      ],
-      "name": "getBalance",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -460,19 +355,6 @@ App = {
       "inputs": [
         {
           "internalType": "address payable",
-          "name": "address1",
-          "type": "address"
-        }
-      ],
-      "name": "sendTokens",
-      "outputs": [],
-      "stateMutability": "payable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address payable",
           "name": "companyAddress",
           "type": "address"
         }
@@ -486,10 +368,7 @@ App = {
 }
 
 window.ethereum.on('accountsChanged', function () {
-  App.populateAddress().then(()=>{
-    App.getBalance();
-  })
-  
+  App.populateAddress();
 })
 
 $(function() {

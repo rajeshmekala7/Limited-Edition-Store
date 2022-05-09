@@ -2,31 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-interface IERC20 {
-   
-    function totalSupply() external view returns (uint256);
-
-    function balanceOf(address tokenOwner) external view returns (uint256);
-
-    function transfer(address receiver, uint numTokens) external returns (bool);
-   
-    function approve(address owner, address spender, uint numTokens) external returns (bool);  
-
-    function allowance(address owner, address spender) external view returns (uint256);
-
-    function transferFrom(address user, address company, uint numTokens) external returns (bool);
-
-}
-
 contract LimitedEditionStore {
-
+    
     //to store the address of the admin
     address admin;
-
-    //to store ERC20 contract address
-    address ERC20contract_Address;
-
-    address contract_addr;
 
     //product struct to store the details of products
     struct Product {
@@ -61,10 +40,8 @@ contract LimitedEditionStore {
     //mapping product to owners using a map from productID to address[] array
     mapping(uint => address[]) owners;
 
-    constructor(address ERC20_address) {
+    constructor() {
         admin = msg.sender;
-        contract_addr = address(this);
-        ERC20contract_Address = ERC20_address;
     }
 
     modifier onlyAdmin() {
@@ -77,18 +54,6 @@ contract LimitedEditionStore {
         _;
     }
 
-    // function setContractAddr(address ERC20_address) public payable {
-    //    ERC20contract_Address = ERC20_address;
-    // }
-
-    function sendTokens(address payable address1) payable public onlyAdmin{
-        IERC20(ERC20contract_Address).transfer(address1, 100);
-    }
-
-    function getBalance(address user) view public returns (uint){
-        return IERC20(ERC20contract_Address).balanceOf(user);
-    }
-
     function registerCompany(bytes32 companyName, address payable companyAddress) public onlyAdmin {
         Company memory com;
         com.companyId = companyId;
@@ -97,7 +62,6 @@ contract LimitedEditionStore {
         com.companyAddress = companyAddress;
         addressToCompanyMap[companyAddress] = com;
         companies.push(com);
-        IERC20(ERC20contract_Address).transfer(companyAddress, 100);
         companyId++;
     }
 
@@ -111,19 +75,14 @@ contract LimitedEditionStore {
         productId++;
     }
 
-    function approve(uint price) public {
-        IERC20(ERC20contract_Address).approve(msg.sender , contract_addr, price);
-    }
-
     function buyProduct(uint productId1) public payable {
-        //require(msg.value == products[productId1].price );
+        require(msg.value == (products[productId1].price * 10 ** 18) );
         require(products[productId1].availableUnits > 0);
         products[productId1].availableUnits--;
-        //add product to user
+        // add product to user
         owners[productId1].push(msg.sender);
-        //transfer money to company
-        IERC20(ERC20contract_Address).transferFrom(msg.sender,companies[products[productId1].companyId].companyAddress, products[productId1].price);
-        //companies[products[productId1].companyId].companyAddress.transfer(msg.value);
+        // transfer money to company
+        companies[products[productId1].companyId].companyAddress.transfer(msg.value);
     }
 
     function getOwners(uint productId2) view public returns(address[] memory) {
